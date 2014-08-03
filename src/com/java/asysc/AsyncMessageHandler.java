@@ -23,6 +23,12 @@ public abstract class AsyncMessageHandler {
 	public void sendMessage(Message message)
 	{
 		msgQueue.add(message);
+		Thread mProducer = new Thread(new MessageProducer());
+		mProducer.start();
+	}
+	
+	private void sendMessage()
+	{
 		synchronized (lock)
 		{
 			lock.notify();
@@ -69,6 +75,16 @@ public abstract class AsyncMessageHandler {
 		public void run()
 		{
 			consume();
+		}
+	}
+	
+	public class MessageProducer implements Runnable
+	{
+
+		@Override
+		public void run()
+		{
+			sendMessage();
 		}
 	}
 	
