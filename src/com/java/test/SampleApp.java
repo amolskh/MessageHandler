@@ -21,7 +21,6 @@ public class SampleApp  extends Thread{
 
 		msg.sendMessage(new Message(3));
 		System.out.println("REUnnning thread1");
-msg.sendMessage(new Message(4));
-
+		msg.sendMessage(new Message(4));
 	}
 }

@@ -10,6 +10,8 @@ public abstract class AsyncMessageHandler {
 	private Thread sender = new Thread(msgSender);
 	
 	private Object lock = new Object();
+	
+	private boolean isExit = false;
 
 	private Queue<Message> msgQueue = new LinkedBlockingQueue<Message>();
 	
@@ -20,16 +22,16 @@ public abstract class AsyncMessageHandler {
 	
 	public void sendMessage(Message message)
 	{
-		System.out.println("Adding new message to queue");
 		msgQueue.add(message);
-		synchronized (lock) {
+		synchronized (lock)
+		{
 			lock.notify();
 		}
 	}
 	
-	public void consume()
+	private void consume()
 	{
-		while(true)
+		while(!isExit)
 		{
 			if(msgQueue.isEmpty())
 			{
@@ -37,7 +39,6 @@ public abstract class AsyncMessageHandler {
 				{
 					try
 					{
-						System.out.println("Entering Wait");
 						lock.wait();
 					}
 					catch (InterruptedException e)
@@ -48,13 +49,16 @@ public abstract class AsyncMessageHandler {
 			}
 			else
 			{
-				System.out.println("Queue got new record");
 				Message msg = msgQueue.poll();
 				AsyncMessageHandler.this.onMessageReceived(msg);
 			}
 		}
 	}
 	
+	/**
+	 * This is abstract method to be implemented in class consuming the messages
+	 * @param message
+	 */
 	public abstract  void onMessageReceived(Message message);
 	
 	
@@ -65,6 +69,18 @@ public abstract class AsyncMessageHandler {
 		public void run()
 		{
 			consume();
+		}
+	}
+	
+	/**
+	 * Consider callling this message when you no longer need message handler
+	 * or from destroy method of Bean LifeCycle
+	 */
+	public void shutDownMessageHandler()
+	{
+		isExit = true;
+		synchronized (lock) {
+			lock.notify();
 		}
 	}
 }
